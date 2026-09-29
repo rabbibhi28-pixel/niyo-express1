@@ -1,0 +1,1356 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111a33">
+<title>NIYO EXPRESS</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--navy:#111a33;--orange:#ff7417;--bg:#f5f7fb;--muted:#697386;--line:#e7eaf0;--green:#159447}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:#172033;font-family:system-ui,-apple-system,"Noto Sans Bengali",Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;border:0}
+.top{height:62px;background:var(--navy);color:white;display:flex;align-items:center;justify-content:space-between;padding:0 15px;position:sticky;top:0;z-index:50}
+.logo{font-weight:950;font-size:21px}
+.logo span{color:var(--orange)}
+.user{font-size:12px;background:#273454;border-radius:20px;padding:7px 10px}
+.page{display:none}
+.page.on{display:block}
+.wrap{max-width:1100px;margin:auto;padding:14px 14px 80px}
+.card{background:#fff;border-radius:17px;padding:16px;margin-bottom:14px;box-shadow:0 6px 25px #0000000b}
+.muted{font-size:13px;color:var(--muted)}
+.btn{padding:11px 15px;border-radius:10px;font-weight:800}
+.primary{background:var(--orange);color:white}
+.secondary{background:#e9edf4;color:#172033}
+.danger{background:#fee2e2;color:#991b1b}
+.green{background:var(--green);color:white}
+.login{max-width:480px;margin:65px auto;text-align:center}
+.login h1{font-size:35px}
+.orange{color:var(--orange)}
+.search{background:#fff;border-radius:12px;padding:11px;margin:10px 0}
+.search input{width:90%;border:0;outline:0;background:transparent}
+.grid{display:grid;gap:13px}
+.restaurants{grid-template-columns:repeat(auto-fit,minmax(235px,1fr))}
+.restaurant{background:white;border-radius:15px;padding:15px;box-shadow:0 4px 18px #0000000a}
+.food{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:12px 0}
+.cartline{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+.total{font-size:21px;font-weight:900;margin:12px 0}
+.nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #ddd;display:flex;justify-content:space-around;padding:8px;z-index:100}
+.nav button{background:none;font-weight:800}
+#map{height:calc(100vh - 62px);position:relative;overflow:hidden;background:#dfe8da;background-image:linear-gradient(35deg,transparent 47%,#fff 48%,#fff 51%,transparent 52%),linear-gradient(125deg,transparent 46%,#c9d2c3 47%,#c9d2c3 50%,transparent 51%);background-size:120px 120px,180px 180px}
+.mapbox{position:absolute;left:12px;right:12px;background:#fff;border-radius:15px;padding:12px;box-shadow:0 6px 25px #0003;z-index:5}
+.maptop{top:12px}
+.orderbox{bottom:13px}
+.actions{display:flex;gap:8px}
+.actions>*{flex:1}
+.pin{position:absolute;font-size:32px;z-index:3}
+.route{position:absolute;left:20%;top:50%;width:60%;height:5px;background:var(--orange);transform:rotate(-22deg);border-radius:8px}
+.stats{grid-template-columns:repeat(4,1fr)}
+.stat b{display:block;font-size:27px}
+.alert{background:#fff7ed;border-radius:10px;padding:11px;margin:7px 0}
+table{width:100%;border-collapse:collapse}
+th,td{padding:9px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #dfe3ea;border-radius:9px;margin:6px 0 12px}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:200;align-items:center;justify-content:center}
+.modal.on{display:flex}
+.modal>div{width:min(450px,94%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:19px}
+.toast{position:fixed;right:12px;top:75px;z-index:300;background:#111a33;color:white;padding:12px 15px;border-radius:12px;display:none;max-width:340px}
+.toast.on{display:block}
+.status{display:inline-block;padding:5px 8px;border-radius:20px;background:#edf1f7;font-size:12px;font-weight:800}
+@media(max-width:650px){
+.stats{grid-template-columns:repeat(2,1fr)}
+table{font-size:12px}
+.wrap{padding-left:10px;padding-right:10px}
+}
+</style>
+</head>
+
+<body>
+
+<header class="top">
+<div class="logo">NIYO <span>EXPRESS</span></div>
+<div id="userBadge" class="user">Guest</div>
+</header>
+
+<section id="loginPage" class="page on">
+<div class="card login">
+<h1>NIYO <span class="orange">EXPRESS</span></h1>
+<p>Chattogram Food Delivery</p>
+
+<button class="btn primary" style="width:100%" id="googleLogin">
+Continue with Google
+</button>
+
+<p class="muted">
+একটি Google account একটি account-এর সঙ্গে যুক্ত হবে।
+Customer-এর জন্য phone verification বাধ্যতামূলক।
+</p>
+</div>
+</section>
+
+<section id="customerPage" class="page">
+<div class="wrap">
+
+<div class="card">
+📍 <b>Delivery location</b><br>
+<span id="customerAddress">Location নির্বাচন করুন</span>
+<button class="btn secondary" style="float:right" onclick="openLocation()">
+Change
+</button>
+</div>
+
+<div class="search">
+🔎 <input id="search" placeholder="খাবার বা restaurant খুঁজুন">
+</div>
+
+<h2>Restaurants</h2>
+<div id="restaurants" class="grid restaurants"></div>
+
+<div class="card">
+<h2>🛒 Cart <span id="cartCount">0</span></h2>
+<div id="cart"></div>
+
+<div>Food: ৳<span id="foodTotal">0</span></div>
+<div>Delivery: ৳<span id="delivery">80</span></div>
+
+<div class="total">
+Total: ৳<span id="grandTotal">0</span>
+</div>
+
+<button class="btn primary" onclick="openCheckout()">
+Checkout
+</button>
+</div>
+
+<div class="card">
+<h3>📦 My Orders</h3>
+<div id="myOrders"></div>
+</div>
+
+</div>
+</section>
+
+<section id="riderPage" class="page">
+<div id="map">
+
+<div class="pin" style="left:22%;top:33%">🛵</div>
+<div class="pin" style="right:20%;bottom:35%">📍</div>
+<div class="route"></div>
+
+<div class="mapbox maptop">
+<b>🛵 Rider Online</b>
+<button class="btn secondary" style="float:right" onclick="updateRiderGPS()">
+◎ GPS
+</button>
+</div>
+
+<div class="mapbox orderbox">
+<small class="orange"><b>NEW ORDER</b></small>
+<h3 id="riderOrderTitle">Waiting...</h3>
+<p id="riderOrderDetails">
+নতুন order এলে এখানে দেখা যাবে।
+</p>
+
+<div class="actions">
+<button class="btn danger" onclick="rejectCurrent()">REJECT</button>
+<button class="btn primary" onclick="acceptCurrent()">ACCEPT</button>
+</div>
+
+<button class="btn secondary" style="width:100%;margin-top:8px" onclick="openProblem()">
+🚨 Problem / Handover
+</button>
+</div>
+
+</div>
+</section>
+
+<section id="adminPage" class="page">
+<div class="wrap">
+
+<h2>🧑‍💼 Admin Control Center</h2>
+
+<div class="grid stats">
+
+<div class="card stat">
+<b id="statOrders">0</b>
+Orders
+</div>
+
+<div class="card stat">
+<b id="statRiders">0</b>
+Active Riders
+</div>
+
+<div class="card stat">
+<b id="statPayments">0</b>
+Payment Review
+</div>
+
+<div class="card stat">
+<b id="statProblems">0</b>
+Handover Review
+</div>
+
+</div>
+
+<div class="card">
+<h3>🤖 Backend AI Alerts</h3>
+<div id="alerts">
+<div class="alert">
+AI fraud/anomaly system চালু হলে এখানে alerts আসবে।
+</div>
+</div>
+</div>
+
+<div class="card">
+<h3>📦 Orders</h3>
+
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Phone</th>
+<th>Total</th>
+<th>Status</th>
+<th>Rider</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="adminOrders"></tbody>
+</table>
+
+</div>
+
+<div class="card">
+<h3>💳 Pending bKash Payments</h3>
+<div id="payments"></div>
+</div>
+
+</div>
+</section>
+
+<nav id="nav" class="nav" style="display:none">
+<button onclick="showPage('customerPage')">🏠 Home</button>
+<button onclick="showPage('riderPage')">🛵 Rider</button>
+<button onclick="showPage('adminPage')">⚙ Admin</button>
+<button onclick="signOut()">Logout</button>
+</nav>
+
+<div id="checkoutModal" class="modal">
+<div>
+
+<h2>Checkout</h2>
+
+<label>বাংলাদেশি ফোন নম্বর</label>
+
+<input id="phone" placeholder="01XXXXXXXXX">
+
+<button class="btn secondary" onclick="sendOtp()">
+Verify Phone
+</button>
+
+<div id="otpArea" style="display:none">
+
+<input id="otp" placeholder="OTP">
+
+<button class="btn green" onclick="verifyOtp()">
+Verify OTP
+</button>
+
+</div>
+
+<label>Payment</label>
+
+<select id="payment">
+<option value="cash">Cash on Delivery</option>
+<option value="bkash">bKash Send Money</option>
+</select>
+
+<label>Address</label>
+
+<textarea id="address" placeholder="সম্পূর্ণ delivery address"></textarea>
+
+<button class="btn primary" onclick="placeOrder()">
+Place Order
+</button>
+
+<button class="btn secondary" onclick="closeCheckout()">
+Close
+</button>
+
+</div>
+</div>
+
+<div id="problemModal" class="modal">
+<div>
+
+<h2>Rider Problem / Handover</h2>
+
+<select id="problemReason">
+<option>Bike problem</option>
+<option>Accident / Emergency</option>
+<option>Restaurant issue</option>
+<option>Road / traffic</option>
+<option>Other</option>
+</select>
+
+<textarea id="problemDetails" placeholder="সমস্যার বিস্তারিত"></textarea>
+
+<input id="evidence" type="file" accept="image/*">
+
+<button class="btn primary" onclick="submitProblem()">
+Submit
+</button>
+
+<button class="btn secondary" onclick="closeProblem()">
+Close
+</button>
+
+</div>
+</div>
+
+<div id="locationModal" class="modal">
+<div>
+
+<h2>Delivery Location</h2>
+
+<textarea id="locationText" placeholder="ঠিকানা"></textarea>
+
+<button class="btn primary" onclick="saveLocation()">
+Save
+</button>
+
+<button class="btn secondary" onclick="closeLocation()">
+Close
+</button>
+
+</div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+/* ========= NIYO EXPRESS CONFIG =========
+
+SUPABASE_ANON_KEY is designed for browser use.
+
+NEVER put service-role, Gemini secret,
+or SMS provider secret here.
+
+Put those secrets in Supabase Edge Function secrets.
+
+*/
+
+const CONFIG={
+
+SUPABASE_URL:
+window.NIYO_CONFIG?.SUPABASE_URL||"",
+
+SUPABASE_ANON_KEY:
+window.NIYO_CONFIG?.SUPABASE_ANON_KEY||"",
+
+DELIVERY_CHARGE:80,
+
+OTP_FUNCTION:"send-otp",
+
+AI_FUNCTION:"ai-analyze"
+
+};
+
+const configured=
+CONFIG.SUPABASE_URL.startsWith("http") &&
+!CONFIG.SUPABASE_URL.includes("PASTE_") &&
+!!CONFIG.SUPABASE_ANON_KEY &&
+!CONFIG.SUPABASE_ANON_KEY.includes("PASTE_");
+
+const client=
+configured
+?supabase.createClient(
+CONFIG.SUPABASE_URL,
+CONFIG.SUPABASE_ANON_KEY
+)
+:null;
+
+const menu=[
+
+{
+name:"Burger House",
+items:[
+["Chicken Burger",250],
+["Cheese Burger",320],
+["French Fries",120]
+]
+},
+
+{
+name:"Chattogram Biryani",
+items:[
+["Chicken Biryani",220],
+["Beef Biryani",280],
+["Borhani",60]
+]
+},
+
+{
+name:"Pizza Point",
+items:[
+["Chicken Pizza",450],
+["Beef Pizza",520],
+["Garlic Bread",160]
+]
+}
+
+];
+
+let cart=[],
+me=null,
+currentRiderOrder=null,
+phoneVerified=false;
+
+const $=id=>document.getElementById(id);
+
+function toast(x){
+
+$("toast").textContent=x;
+
+$("toast").classList.add("on");
+
+setTimeout(
+()=>$("toast").classList.remove("on"),
+3500
+);
+
+}
+
+function showPage(id){
+
+document
+.querySelectorAll(".page")
+.forEach(x=>x.classList.remove("on"));
+
+$(id).classList.add("on");
+
+}
+
+function renderMenu(){
+
+const q=(
+$("search").value||""
+).toLowerCase();
+
+$("restaurants").innerHTML=
+
+menu.map(r=>{
+
+const items=
+r.items.filter(i=>
+r.name.toLowerCase().includes(q)||
+i[0].toLowerCase().includes(q)
+);
+
+if(!items.length)return"";
+
+return `
+<div class="restaurant">
+
+<h3>🍔 ${r.name}</h3>
+
+${items.map(i=>`
+
+<div class="food">
+
+<span>
+${i[0]}
+<br>
+<b>৳${i[1]}</b>
+</span>
+
+<button
+class="btn primary"
+onclick="addItem('${r.name}','${i[0]}',${i[1]})">
+
+ADD
+
+</button>
+
+</div>
+
+`).join("")}
+
+</div>
+`;
+
+}).join("");
+
+}
+
+function addItem(r,n,p){
+
+cart.push({
+restaurant:r,
+name:n,
+price:p
+});
+
+renderCart();
+
+}
+
+function renderCart(){
+
+const t=
+cart.reduce(
+(a,x)=>a+x.price,
+0
+);
+
+$("cartCount").textContent=
+cart.length;
+
+$("foodTotal").textContent=t;
+
+$("delivery").textContent=
+cart.length
+?CONFIG.DELIVERY_CHARGE
+:0;
+
+$("grandTotal").textContent=
+cart.length
+?t+CONFIG.DELIVERY_CHARGE
+:0;
+
+$("cart").innerHTML=
+
+cart.map((x,i)=>`
+
+<div class="cartline">
+
+${x.name}
+
+<span>
+৳${x.price}
+
+<button
+class="btn danger"
+style="padding:4px 8px"
+onclick="removeItem(${i})">
+
+×
+
+</button>
+
+</span>
+
+</div>
+
+`).join("");
+
+}
+
+function removeItem(i){
+
+cart.splice(i,1);
+
+renderCart();
+
+}
+
+async function googleLogin(){
+
+if(!client)
+
+return toast(
+"Supabase configuration এখনো সেট করা হয়নি। config.js-এ Project URL ও anon/publishable key দিন।"
+);
+
+const {error}=
+await client.auth.signInWithOAuth({
+
+provider:"google",
+
+options:{
+redirectTo:
+location.origin+
+location.pathname
+}
+
+});
+
+if(error)
+toast(error.message);
+
+}
+
+async function boot(){
+
+if(!client){
+
+$("userBadge").textContent=
+"Setup needed";
+
+return;
+
+}
+
+const {data}=
+await client.auth.getSession();
+
+if(data.session)
+await loadMe(data.session.user);
+
+client.auth.onAuthStateChange(
+(event,session)=>{
+
+if(session)
+loadMe(session.user);
+
+});
+
+}
+
+async function loadMe(u){
+
+let {
+data,
+error
+}=
+await client
+.from("profiles")
+.select("*")
+.eq("id",u.id)
+.maybeSingle();
+
+if(error){
+
+toast(
+"Profile load error: "+
+error.message
+);
+
+return;
+
+}
+
+if(!data){
+
+const displayName=
+u.user_metadata?.full_name||
+u.user_metadata?.name||
+u.email?.split("@")[0]||
+"Customer";
+
+const created=
+await client
+.from("profiles")
+.insert({
+
+id:u.id,
+name:displayName,
+email:u.email,
+role:"customer",
+status:"active"
+
+})
+.select("*")
+.single();
+
+if(created.error){
+
+toast(
+"Profile তৈরি করা যায়নি: "+
+created.error.message
+);
+
+return;
+
+}
+
+data=created.data;
+
+}
+
+me=data;
+
+$('userBadge').textContent=
+data.name||u.email;
+
+$('nav').style.display="flex";
+
+if(data.role==="admin"){
+
+showPage("adminPage");
+
+await loadAdmin();
+
+}
+
+else if(data.role==="rider"){
+
+showPage("riderPage");
+
+startRiderRealtime();
+
+await loadRiderOrder();
+
+}
+
+else{
+
+showPage("customerPage");
+
+await loadMyOrders();
+
+}
+
+}
+
+async function signOut(){
+
+if(client)
+await client.auth.signOut();
+
+location.reload();
+
+}
+
+$("search")
+.addEventListener(
+"input",
+renderMenu
+);
+
+function openCheckout(){
+
+if(!cart.length)
+return toast("Cart খালি");
+
+$("checkoutModal")
+.classList.add("on");
+
+}
+
+function closeCheckout(){
+
+$("checkoutModal")
+.classList.remove("on");
+
+}
+
+async function sendOtp(){
+
+const phone=
+$("phone").value.trim();
+
+if(
+!/^01[3-9]\d{8}$/.test(phone)
+)
+return toast(
+"সঠিক বাংলাদেশি নম্বর দিন"
+);
+
+if(!client)
+return toast(
+"Supabase configure করুন"
+);
+
+const {data,error}=
+await client.functions.invoke(
+CONFIG.OTP_FUNCTION,
+{
+body:{
+action:"send",
+phone
+}
+}
+);
+
+if(error)
+return toast(error.message);
+
+$("otpArea")
+.style.display="block";
+
+toast("OTP পাঠানো হয়েছে");
+
+}
+
+async function verifyOtp(){
+
+const phone=
+$("phone").value.trim();
+
+const otp=
+$("otp").value.trim();
+
+const {data,error}=
+await client.functions.invoke(
+CONFIG.OTP_FUNCTION,
+{
+body:{
+action:"verify",
+phone,
+otp,
+user_id:me.id
+}
+}
+);
+
+if(error)
+return toast(error.message);
+
+if(!data?.verified)
+return toast("OTP ভুল");
+
+phoneVerified=true;
+
+toast("Phone verified");
+
+}
+
+async function placeOrder(){
+
+if(!phoneVerified)
+return toast(
+"আগে phone OTP verify করুন"
+);
+
+if(!cart.length)
+return toast("Cart খালি");
+
+const phone=
+$("phone").value.trim();
+
+const address=
+$("address").value.trim();
+
+const payment=
+$("payment").value;
+
+if(!address)
+return toast("ঠিকানা দিন");
+
+const {data,error}=
+await client.functions.invoke(
+"create-order",
+{
+body:{
+customer_id:me.id,
+phone,
+address,
+payment_method:payment,
+delivery_charge:
+CONFIG.DELIVERY_CHARGE,
+items:cart
+}
+}
+);
+
+if(error)
+return toast(error.message);
+
+cart=[];
+
+renderCart();
+
+closeCheckout();
+
+toast(
+"Order তৈরি হয়েছে: "+
+data.order_id
+);
+
+await loadMyOrders();
+
+}
+
+async function loadMyOrders(){
+
+const {data}=
+await client
+.from("orders")
+.select(
+"id,total_amount,status,payment_status,created_at"
+)
+.eq("customer_id",me.id)
+.order("created_at",{ascending:false})
+.limit(20);
+
+$("myOrders").innerHTML=
+
+(data||[])
+.map(o=>`
+
+<div class="card">
+
+<b>#${o.id.slice(0,8)}</b>
+· ৳${o.total_amount}
+
+<br>
+
+<span class="status">
+${o.status}
+</span>
+
+<span class="status">
+${o.payment_status}
+</span>
+
+</div>
+
+`)
+.join("")
+
+||
+
+"কোনো order নেই";
+
+}
+
+function openLocation(){
+
+$("locationModal")
+.classList.add("on");
+
+}
+
+function closeLocation(){
+
+$("locationModal")
+.classList.remove("on");
+
+}
+
+function saveLocation(){
+
+$("customerAddress")
+.textContent=
+$("locationText").value||
+"Location নির্বাচন করুন";
+
+closeLocation();
+
+}
+
+async function loadRiderOrder(){
+
+const {data}=
+await client
+.from("orders")
+.select("*")
+.eq("rider_id",me.id)
+.in(
+"status",
+[
+"assigned",
+"accepted",
+"going_to_restaurant",
+"picked_up"
+]
+)
+.order("created_at",{ascending:false})
+.limit(1)
+.maybeSingle();
+
+currentRiderOrder=data;
+
+renderRiderOrder();
+
+}
+
+function renderRiderOrder(){
+
+if(!currentRiderOrder){
+
+$("riderOrderTitle")
+.textContent=
+"Waiting for order";
+
+$("riderOrderDetails")
+.textContent=
+"নতুন order এলে এখানে আসবে";
+
+return;
+
+}
+
+$("riderOrderTitle")
+.textContent=
+"#"+
+currentRiderOrder.id.slice(0,8);
+
+$("riderOrderDetails")
+.textContent=
+currentRiderOrder.address+
+" · ৳"+
+currentRiderOrder.total_amount;
+
+}
+
+async function acceptCurrent(){
+
+if(!currentRiderOrder)
+return toast(
+"কোনো assigned order নেই"
+);
+
+const {error}=
+await client
+.from("orders")
+.update({
+status:"accepted",
+accepted_at:
+new Date().toISOString()
+})
+.eq("id",currentRiderOrder.id)
+.eq("rider_id",me.id);
+
+if(error)
+toast(error.message);
+
+else{
+
+toast("Order accepted");
+
+await loadRiderOrder();
+
+}
+
+}
+
+async function rejectCurrent(){
+
+if(!currentRiderOrder)
+return;
+
+toast(
+"Reject করলে order admin reassignment queue-তে যাবে"
+);
+
+openProblem();
+
+}
+
+function openProblem(){
+
+if(!currentRiderOrder)
+return toast(
+"কোনো active order নেই"
+);
+
+$("problemModal")
+.classList.add("on");
+
+}
+
+function closeProblem(){
+
+$("problemModal")
+.classList.remove("on");
+
+}
+
+async function submitProblem(){
+
+const details=
+$("problemDetails")
+.value.trim();
+
+if(!details)
+return toast(
+"সমস্যার বিস্তারিত দিন"
+);
+
+const {data,error}=
+await client.functions.invoke(
+"rider-problem",
+{
+body:{
+order_id:
+currentRiderOrder.id,
+
+rider_id:me.id,
+
+reason:
+$("problemReason").value,
+
+details
+
+}
+}
+);
+
+if(error)
+return toast(error.message);
+
+closeProblem();
+
+toast(
+"Handover request submitted"
+);
+
+await loadRiderOrder();
+
+}
+
+async function updateRiderGPS(){
+
+if(!navigator.geolocation)
+return toast(
+"GPS unavailable"
+);
+
+navigator.geolocation.getCurrentPosition(
+async p=>{
+
+if(!client)
+return;
+
+await client
+.from("rider_locations")
+.upsert({
+
+rider_id:me.id,
+lat:p.coords.latitude,
+lng:p.coords.longitude,
+updated_at:
+new Date().toISOString()
+
+});
+
+toast("GPS updated");
+
+},
+()=>toast("GPS permission দিন")
+);
+
+}
+
+function startRiderRealtime(){
+
+client
+.channel(
+"rider-orders-"+me.id
+)
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"orders",
+filter:
+"rider_id=eq."+me.id
+},
+payload=>{
+
+if(
+payload.eventType==="INSERT"||
+payload.eventType==="UPDATE"
+){
+
+currentRiderOrder=
+payload.new;
+
+renderRiderOrder();
+
+playNewOrderSound();
+
+toast(
+"🔔 নতুন/আপডেট order এসেছে!"
+);
+
+}
+
+}
+)
+.subscribe();
+
+}
+
+let audioCtx;
+
+function playNewOrderSound(){
+
+try{
+
+audioCtx=
+audioCtx||
+new(
+window.AudioContext||
+window.webkitAudioContext
+)();
+
+const now=
+audioCtx.currentTime;
+
+[0,0.22,0.44,0.66]
+.forEach((d,i)=>{
+
+const o=
+audioCtx.createOscillator();
+
+const g=
+audioCtx.createGain();
+
+o.type="sine";
+
+o.frequency.value=
+i%2?880:660;
+
+g.gain.setValueAtTime(
+.0001,
+now+d
+);
+
+g.gain.exponentialRampToValueAtTime(
+.28,
+now+d+.03
+);
+
+g.gain.exponentialRampToValueAtTime(
+.0001,
+now+d+.16
+);
+
+o.connect(g)
+.connect(audioCtx.destination);
+
+o.start(now+d);
+
+o.stop(now+d+.18);
+
+});
+
+}catch(e){}
+
+}
+
+async function loadAdmin(){
+
+const {data:orders}=
+await client
+.from("orders")
+.select(
+"id,phone,total_amount,status,rider_id,payment_status"
+)
+.order("created_at",{ascending:false})
+.limit(100);
+
+$("statOrders")
+.textContent=
+(orders||[]).length;
+
+$("statPayments")
+.textContent=
+(orders||[])
+.filter(
+x=>x.payment_status==="pending"
+)
+.length;
+
+$("adminOrders")
+.innerHTML=
+(orders||[])
+.map(o=>`
+
+<tr>
+
+<td>${o.id.slice(0,8)}</td>
+
+<td>${o.phone}</td>
+
+<td>৳${o.total_amount}</td>
+
+<td>${o.status}</td>
+
+<td>
+${o.rider_id?
+o.rider_id.slice(0,8):
+"—"}
+</td>
+
+<td>
+
+<button
+class="btn secondary"
+onclick="adminAssign('${o.id}')">
+
+Assign
+
+</button>
+
+</td>
+
+</tr>
+
+`)
+.join("");
+
+const {data:problems}=
+await client
+.from("rider_problem_reports")
+.select("*")
+.eq("status","pending");
+
+$("statProblems")
+.textContent=
+(problems||[]).length;
+
+}
+
+async function adminAssign(id){
+
+const rider=
+prompt(
+"Approved rider UUID দিন:"
+);
+
+if(!rider)
+return;
+
+const {error}=
+await client.functions.invoke(
+"assign-rider",
+{
+body:{
+order_id:id,
+rider_id:rider
+}
+}
+);
+
+if(error)
+toast(error.message);
+
+else{
+
+toast("Rider assigned");
+
+loadAdmin();
+
+}
+
+}
+
+if("serviceWorker"in navigator)
+
+navigator.serviceWorker
+.register("sw.js")
+.catch(()=>{});
+
+renderMenu();
+
+renderCart();
+
+boot();
+
+</script>
+
+</body>
+</html>
